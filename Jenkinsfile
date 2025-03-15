@@ -1,9 +1,13 @@
 pipeline {
     agent any  // Runs on any available agent
-    
+
     environment {
         VIRTUAL_ENV = 'venv'  // Virtual environment directory
         FLASK_APP = 'app.py'
+    }
+
+    parameters {
+        booleanParam(name: 'DEPLOY_TO_SERVER', defaultValue: false, description: 'Deploy application after successful build')
     }
 
     stages {
@@ -20,9 +24,11 @@ pipeline {
             steps {
                 script {
                     echo 'Setting up Python environment...'
-                    sh 'python3 -m venv $VIRTUAL_ENV'
-                    sh 'source $VIRTUAL_ENV/bin/activate && pip install --upgrade pip'
-                    sh 'source $VIRTUAL_ENV/bin/activate && pip install -r requirements.txt'
+                    sh '''
+                        python3 -m venv $VIRTUAL_ENV
+                        source $VIRTUAL_ENV/bin/activate && pip install --upgrade pip
+                        source $VIRTUAL_ENV/bin/activate && pip install -r requirements.txt
+                    '''
                 }
             }
         }
@@ -31,7 +37,10 @@ pipeline {
             steps {
                 script {
                     echo 'Building the application...'
-                    sh 'source $VIRTUAL_ENV/bin/activate && python --version'
+                    sh '''
+                        source $VIRTUAL_ENV/bin/activate
+                        python --version
+                    '''
                 }
             }
         }
@@ -40,19 +49,26 @@ pipeline {
             steps {
                 script {
                     echo 'Running tests...'
-                    sh 'source $VIRTUAL_ENV/bin/activate && pytest tests/'  // Adjust this to your test folder
+                    sh '''
+                        source $VIRTUAL_ENV/bin/activate
+                        pytest tests/ --disable-warnings --maxfail=3
+                    '''
                 }
             }
         }
 
-        stage('Deploy (Optional)') {
+        stage('Deploy') {
             when {
-                expression { return params.DEPLOY_TO_SERVER == 'true' }  // Optional deployment toggle
+                expression { return params.DEPLOY_TO_SERVER }  
             }
             steps {
                 script {
                     echo 'Deploying application...'
-                    sh 'source $VIRTUAL_ENV/bin/activate && flask run --host=0.0.0.0 --port=5000 &'
+                    sh '''
+                        source $VIRTUAL_ENV/bin/activate
+                        nohup flask run --host=0.0.0.0 --port=5000 > flask.log 2>&1 &
+                        echo $! > flask.pid
+                    '''
                 }
             }
         }
@@ -62,16 +78,24 @@ pipeline {
         success {
             script {
                 echo "Build Successful!"
-                emailext subject: "Build Success: ${env.JOB_NAME}",
-                         body: "Build ${env.BUILD_NUMBER} succeeded! View details at: ${env.BUILD_URL}",
+                emailext subject: "[SUCCESS] Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}",
+                         body: """<p><strong>Build Successful! 🎉</strong></p>
+                                  <p>Project: ${env.JOB_NAME}</p>
+                                  <p>Build Number: ${env.BUILD_NUMBER}</p>
+                                  <p>View details: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
+                         mimeType: 'text/html',
                          to: 'priyasingh2103@gmail.com'
             }
         }
         failure {
             script {
                 echo "Build Failed!"
-                emailext subject: "Build Failed: ${env.JOB_NAME}",
-                         body: "Build ${env.BUILD_NUMBER} failed! View details at: ${env.BUILD_URL}",
+                emailext subject: "[FAILURE] Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}",
+                         body: """<p><strong>Build Failed! </strong></p>
+                                  <p>Project: ${env.JOB_NAME}</p>
+                                  <p>Build Number: ${env.BUILD_NUMBER}</p>
+                                  <p>View details: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
+                         mimeType: 'text/html',
                          to: 'priyasingh2103@gmail.com'
             }
         }

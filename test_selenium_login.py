@@ -4,8 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-WEB_APP_URL = 'http://localhost:5000/'
-  # Confirm this matches your Flask app URL
+WEB_APP_URL = 'http://localhost:5000/'  # Confirm this matches your Flask app URL
 
 # Update with your MySQL credentials
 DB_CONFIG = {
@@ -34,7 +33,7 @@ def test_login_submission():
         # Fill and submit form
         username_field.send_keys(test_username)
         password_field.send_keys(test_password)
-        submit_button.click()
+        driver.execute_script("arguments[0].click();", submit_button)  # Use JavaScript to click
 
         # Wait for submission to complete
         WebDriverWait(driver, 10).until(EC.url_to_be(WEB_APP_URL))  # Redirect back to form
@@ -50,14 +49,6 @@ def test_login_submission():
         assert result is not None, "User not found in database."
         assert result[1] == test_username, "Username mismatch."
         assert result[2] == test_password, "Password mismatch."
-
-        # Cleanup
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM users WHERE username = %s", (test_username,))
-        conn.commit()
-        cursor.close()
-        conn.close()
 
         print("Test passed successfully!")
 

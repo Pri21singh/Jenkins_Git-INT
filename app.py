@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
 import mysql.connector
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-# Database configuration - Update with your MySQL credentials
+# Database configuration
 db_config = {
     'user': 'root',
     'password': 'Software@2025',
@@ -13,7 +13,9 @@ db_config = {
 
 def get_db_connection():
     """Create and return a MySQL database connection."""
-    return mysql.connector.connect(**db_config)
+    conn = mysql.connector.connect(**db_config)
+    conn.autocommit = True  # Ensure autocommit is enabled
+    return conn
 
 @app.route('/')
 def index():
@@ -29,11 +31,13 @@ def handle_login():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        print(f"Inserting user {username} into database...")  # Debugging log
         cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
-        conn.commit()
+        conn.commit()  # Commit transaction to ensure data is saved
+        print(f"User {username} inserted successfully!")  # Log success
     except mysql.connector.Error as e:
-        print(f"Database error: {e}")
-        conn.rollback()
+        print(f"Database error: {e}")  # Print error in Flask logs
+        conn.rollback()  # Rollback transaction in case of error
     finally:
         cursor.close()
         conn.close()

@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'github-pat', url: 'https://github.com/Pri21singh/Jenkins_Pipeline'
+                git branch: 'main', credentialsId: 'github-pat', url: 'https://github.com/Pri21singh/Jenkins_Git-INT'
             }
         }
 
@@ -18,7 +18,7 @@ pipeline {
                     if (!fileExists('venv')) {
                         sh 'python -m venv venv'
                     }
-                    sh 'source venv/bin/activate && pip install -r requirements.txt'
+                    sh 'source venv/Scripts/activate && pip install -r requirements.txt'
                 }
             }
         }

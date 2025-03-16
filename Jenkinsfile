@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         VIRTUAL_ENV = 'venv'
-        EC2_SSH_PRIVATE_KEY = credentials('ec2-ssh-key')
-        EC2_USER = 'ubuntu'  // Replace with the EC2 instance username
+        EC2_SSH_PRIVATE_KEY = credentials('ec2-ssh-key') // EC2 private key from Jenkins credentials
+        EC2_USER = 'ubuntu' // Replace with the EC2 instance username
         EC2_HOST = '3.93.65.178' // Replace with the EC2 instance's public IP or hostname
     }
 
@@ -19,9 +19,9 @@ pipeline {
             steps {
                 script {
                     if (!fileExists('venv')) {
-                        sh 'python -m venv venv'
+                        sh 'python3 -m venv venv'
                     }
-                    sh 'source venv/Scripts/activate && pip install -r requirements.txt'
+                    sh 'source venv/bin/activate && pip install -r requirements.txt'
                 }
             }
         }
@@ -35,7 +35,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh 'source venv/Scripts/activate && python -m unittest test_app.py'
+                    sh 'source venv/bin/activate && python3 -m unittest test_app.py'
                 }
             }
         }
@@ -44,14 +44,16 @@ pipeline {
             steps {
                 echo 'Deploying Python application to EC2...'
 
-                // sh-agent running in the environment
-                sh """
-                    eval \$(ssh-agent -s)
-                    echo "$EC2_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-                    ssh -o StrictHostKeyChecking=no -i ${EC2_SSH_PRIVATE_KEY} ${EC2_USER}@${EC2_HOST} << EOF
-                    git pull origin main  # Pull the latest changes from my Git repository
-                    EOF
-                """
+                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'EC2_SSH_PRIVATE_KEY')]) {
+                    sh '''
+                        echo "$EC2_SSH_PRIVATE_KEY" > /tmp/deploy_key.pem
+                        chmod 600 /tmp/deploy_key.pem
+                        eval $(ssh-agent -s)
+                        ssh-add /tmp/deploy_key.pem
+                        ssh -i /tmp/deploy_key.pem $EC2_USER@$EC2_HOST "your deployment commands"
+                        rm -f /tmp/deploy_key.pem
+                    '''
+                }
             }
         }
     }

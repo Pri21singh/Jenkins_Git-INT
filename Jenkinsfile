@@ -32,7 +32,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh 'source venv/bin/activate && python -m unittest test_app.py'
+                    sh 'source venv/Scripts/activate && python -m unittest test_app.py'
                 }
             }
         }

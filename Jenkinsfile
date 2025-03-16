@@ -66,7 +66,7 @@ pipeline {
                     echo 'Deploying application...'
                     sh '''
                         source $VIRTUAL_ENV/bin/activate
-                        nohup flask run --host=0.0.0.0 --port=5000 > flask.log 2>&1 &
+                        nohup python -m flask run --host=0.0.0.0 --port=5000 > flask.log 2>&1 &
                         echo $! > flask.pid
                     '''
                 }

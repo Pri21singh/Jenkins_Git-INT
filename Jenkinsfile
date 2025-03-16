@@ -68,4 +68,3 @@ pipeline {
                  body: "Build #${env.BUILD_NUMBER} failed. Check logs."
         }
     }
-}

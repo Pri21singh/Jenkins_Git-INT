@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'github-pat', url: 'https://github.com/Pri21singh/Jenkins_Git-INT'
+                git branch: 'main', credentialsId: 'git_jen_PAT', url: 'https://github.com/Pri21singh/Jenkins_Git-INT'
             }
         }
 
@@ -18,7 +18,7 @@ pipeline {
                     if (!fileExists('venv')) {
                         sh 'python -m venv venv'
                     }
-                    sh 'source venv/Scripts/activate && pip install -r requirements.txt'a
+                    sh 'source venv/Scripts/activate && pip install -r requirements.txt'
                 }
             }
         }
@@ -32,21 +32,19 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh '''
-                        source venv/Scripts/activate && python -m unittest test_app.py
-                    '''
+                    sh 'source venv/Scripts/activate && python -m unittest test_app.py'
                 }
             }
         }
 
-      /**  stage('Deploy') {
+        stage('Deploy') {
             when {
                 branch 'main'
             }
             steps {
                 echo 'Deploying Python application...'
             }
-       }**/
+       }
     }  
 
     post {

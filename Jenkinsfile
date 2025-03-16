@@ -41,7 +41,6 @@ pipeline {
         }
 
         stage('Deploy') {
-            }
             steps {
                 echo 'Deploying Python application to EC2...'
 
@@ -49,8 +48,9 @@ pipeline {
                 sh """
                     eval \$(ssh-agent -s)
                     echo "$EC2_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_USER}@${EC2_HOST} << EOF C:/Users/singp/OneDrive/Desktop/CICD/Jenkins_Git-INT
-                    git pull origin main  #  Pull the latest changes from my Git repository
+                    ssh -o StrictHostKeyChecking=no -i ${EC2_SSH_PRIVATE_KEY} ${EC2_USER}@${EC2_HOST} << EOF
+                    git pull origin main  # Pull the latest changes from my Git repository
+                    EOF
                 """
             }
         }
@@ -68,3 +68,4 @@ pipeline {
                  body: "Build #${env.BUILD_NUMBER} failed. Check logs."
         }
     }
+}

@@ -1,103 +1,62 @@
 pipeline {
-    agent any  // Runs on any available agent
+    agent any
 
     environment {
-        VIRTUAL_ENV = 'venv'  // Virtual environment directory
-        FLASK_APP = 'app.py'
-    }
-
-    parameters {
-        booleanParam(name: 'DEPLOY_TO_SERVER', defaultValue: false, description: 'Deploy application after successful build')
+        VIRTUAL_ENV = 'venv'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    echo 'Cloning repository...'
-                    checkout scm
-                }
+                git branch: 'main', credentialsId: 'github-pat', url: 'https://github.com/Pri21singh/Jenkins_Pipeline'
             }
         }
 
-        stage('Setup Python') {
+        stage('Setup Python Environment') {
             steps {
                 script {
-                    echo 'Setting up Python environment...'
-                    sh '''
-                        python -m venv $VIRTUAL_ENV
-                        source $VIRTUAL_ENV/bin/activate && pip install --upgrade pip
-                        source $VIRTUAL_ENV/bin/activate && pip install -r requirements.txt
-                    '''
+                    if (!fileExists('venv')) {
+                        sh 'python -m venv venv'
+                    }
+                    sh 'source venv/bin/activate && pip install -r requirements.txt'
                 }
             }
         }
 
         stage('Build') {
             steps {
-                script {
-                    echo 'Building the application...'
-                    sh '''
-                        source $VIRTUAL_ENV/bin/activate
-                        python --version
-                    '''
-                }
+                echo 'Building Python application...'
             }
         }
 
         stage('Test') {
             steps {
                 script {
-                    echo 'Running tests...'
-                    sh '''
-                        source $VIRTUAL_ENV/bin/activate
-                        pytest tests/ --disable-warnings --maxfail=3
-                    '''
+                    sh 'source venv/bin/activate && python -m unittest test_app.py'
                 }
             }
         }
 
         stage('Deploy') {
             when {
-                expression { return params.DEPLOY_TO_SERVER }  
+                branch 'main'
             }
             steps {
-                script {
-                    echo 'Deploying application...'
-                    sh '''
-                        source $VIRTUAL_ENV/bin/activate
-                        nohup python -m flask run --host=0.0.0.0 --port=5000 > flask.log 2>&1 &
-                        echo $! > flask.pid
-                    '''
-                }
+                echo 'Deploying Python application...'
             }
         }
     }
 
     post {
         success {
-            script {
-                echo "Build Successful!"
-                emailext subject: "[SUCCESS] Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}",
-                         body: """<p><strong>Build Successful! 🎉</strong></p>
-                                  <p>Project: ${env.JOB_NAME}</p>
-                                  <p>Build Number: ${env.BUILD_NUMBER}</p>
-                                  <p>View details: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
-                         mimeType: 'text/html',
-                         to: 'priyasingh2103@gmail.com'
-            }
+            mail to: 'priyasingh2103@gmail.com',
+                 subject: 'Jenkins Build Success',
+                 body: "Build #${env.BUILD_NUMBER} was successful."
         }
         failure {
-            script {
-                echo "Build Failed!"
-                emailext subject: "[FAILURE] Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}",
-                         body: """<p><strong>Build Failed! </strong></p>
-                                  <p>Project: ${env.JOB_NAME}</p>
-                                  <p>Build Number: ${env.BUILD_NUMBER}</p>
-                                  <p>View details: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
-                         mimeType: 'text/html',
-                         to: 'priyasingh2103@gmail.com'
-            }
+            mail to: 'priyasingh2103@gmail.com',
+                 subject: 'Jenkins Build Failure',
+                 body: "Build #${env.BUILD_NUMBER} failed. Check logs."
         }
     }
 }

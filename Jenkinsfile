@@ -21,11 +21,12 @@ pipeline {
                     if (!fileExists('venv')) {
                         sh 'python -m venv venv'
                     }
-                    // Adjusting path for Windows environment
+                    // Ensure proper activation of the virtual environment
                     if (isUnix()) {
                         sh 'source venv/bin/activate && pip install -r requirements.txt'
                     } else {
-                        bat 'venv\\Scripts\\activate && pip install -r requirements.txt'
+                        // For Windows, use cmd to activate the virtual environment
+                        bat 'venv\\Scripts\\activate.bat && pip install -r requirements.txt'
                     }
                 }
             }
@@ -40,11 +41,10 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    // Adjusting path for Windows environment
                     if (isUnix()) {
                         sh 'source venv/bin/activate && python -m unittest test_app.py'
                     } else {
-                        bat 'venv\\Scripts\\activate && python -m unittest test_app.py'
+                        bat 'venv\\Scripts\\activate.bat && python -m unittest test_app.py'
                     }
                 }
             }

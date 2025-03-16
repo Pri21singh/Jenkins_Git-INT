@@ -4,6 +4,8 @@ pipeline {
     environment {
         VIRTUAL_ENV = 'venv'
         EC2_SSH_PRIVATE_KEY = credentials('ec2-ssh-key')
+        EC2_USER = 'ubuntu'  // Replace with the EC2 instance username
+        EC2_HOST = '3.93.65.178' // Replace with the EC2 instance's public IP or hostname
     }
 
     stages {
@@ -39,8 +41,6 @@ pipeline {
         }
 
         stage('Deploy') {
-            when {
-                branch 'main'
             }
             steps {
                 echo 'Deploying Python application to EC2...'
@@ -49,7 +49,8 @@ pipeline {
                 sh """
                     eval \$(ssh-agent -s)
                     echo "$EC2_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-                    ssh -o StrictHostKeyChecking=no ec2-user@3.93.65.178 'cd C:/Users/singp/OneDrive/Desktop/CICD/Jenkins_Git-INT && git pull && source venv/bin/activate && pip install -r requirements.txt && python app.py'
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_USER}@${EC2_HOST} << EOF C:/Users/singp/OneDrive/Desktop/CICD/Jenkins_Git-INT
+                    git pull origin main  #  Pull the latest changes from my Git repository
                 """
             }
         }

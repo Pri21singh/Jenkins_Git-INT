@@ -19,9 +19,14 @@ pipeline {
             steps {
                 script {
                     if (!fileExists('venv')) {
-                        sh 'python3 -m venv venv'
+                        sh 'python -m venv venv'
                     }
-                    sh 'source venv/bin/activate && pip install -r requirements.txt'
+                    // Adjusting path for Windows environment
+                    if (isUnix()) {
+                        sh 'source venv/bin/activate && pip install -r requirements.txt'
+                    } else {
+                        bat 'venv\\Scripts\\activate && pip install -r requirements.txt'
+                    }
                 }
             }
         }
@@ -35,7 +40,12 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh 'source venv/bin/activate && python3 -m unittest test_app.py'
+                    // Adjusting path for Windows environment
+                    if (isUnix()) {
+                        sh 'source venv/bin/activate && python -m unittest test_app.py'
+                    } else {
+                        bat 'venv\\Scripts\\activate && python -m unittest test_app.py'
+                    }
                 }
             }
         }

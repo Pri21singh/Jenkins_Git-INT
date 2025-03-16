@@ -18,7 +18,7 @@ pipeline {
                     if (!fileExists('venv')) {
                         sh 'python -m venv venv'
                     }
-                    sh 'source venv/Scripts/activate && pip install -r requirements.txt'
+                    sh 'source venv/Scripts/activate && pip install -r requirements.txt'a
                 }
             }
         }
@@ -32,20 +32,22 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh 'source venv/Scripts/activate && python -m unittest test_app.py'
+                    sh '''
+                        source venv/Scripts/activate && python -m unittest test_app.py
+                    '''
                 }
             }
         }
 
-     //   stage('Deploy') {
-     //      when {
-       //         branch 'main'
-      //      }
-       //     steps {
-       //         echo 'Deploying Python application...'
-          //  }
-        //}
-  //  }
+      /**  stage('Deploy') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Deploying Python application...'
+            }
+       }**/
+    }  
 
     post {
         success {

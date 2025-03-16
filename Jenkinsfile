@@ -25,7 +25,7 @@ pipeline {
                 script {
                     echo 'Setting up Python environment...'
                     sh '''
-                        python3 -m venv $VIRTUAL_ENV
+                        python -m venv $VIRTUAL_ENV
                         source $VIRTUAL_ENV/bin/activate && pip install --upgrade pip
                         source $VIRTUAL_ENV/bin/activate && pip install -r requirements.txt
                     '''
